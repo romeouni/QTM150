@@ -8,6 +8,3 @@ mean(usArrests_csv$Murder)
 summary(usArrests_csv$Murder)
 summary(usArrests_csv)
 
-
-nbaDS <- read.csv("2019-20_pbp.csv")
-str(nbaDS)
