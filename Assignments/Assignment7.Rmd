@@ -1,0 +1,102 @@
+---
+title: "Assignment 7"
+author: "Rahul Ulman"
+date: "2022-11-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(babynames)
+library(forcats)
+library(nycflights13)
+library(lubridate)
+```
+
+## 1. 
+```{r}
+babynames %>% 
+  group_by(year, sex) %>%
+  summarize(n_Total = sum(n)) %>% 
+  mutate(percent = n_Total/sum(n_Total)*100) %>% 
+  filter(sex %in% "F") %>% 
+  ggplot(aes(x=year, y=percent)) +
+  geom_line()
+  
+```
+
+## 2.
+```{r}
+gss_cat %>% 
+  mutate(income3 = fct_recode(rincome,
+                              "Less than $8k" = "Lt $1000",
+                              "Less than $8k" = "$1000 to 2999",
+                              "Less than $8k" = "$3000 to 3999",
+                              "Less than $8k" = "$4000 to 4999",
+                              "Less than $8k" = "$5000 to 5999",
+                              "Less than $8k" = "$6000 to 6999",
+                              "Less than $8k" = "$7000 to 7999",
+                              "Greater than $8K and Less than $15K" = "$8000 to 9999",
+                              "Greater than $8K and Less than $15K" = "$10000 - 14999",
+                              "$15K or more" = "$15000 - 19999",
+                              "$15K or more" = "$20000 - 24999",
+                              "$15K or more" = "$25000 or more",
+                              "Other" = "Refused",
+                              "Other" = "Don't know",
+                              "Other" = "No answer",
+                              "Other" = "Not applicable")) %>% 
+  group_by(income3) %>%
+  summarize(avg=mean(tvhours, na.rm=T)) %>% 
+  ggplot(aes(x=avg, y=fct_reorder(income3,avg))) +
+  geom_col()
+```
+
+
+### Lubridate
+
+## 1.
+```{r}
+flights %>% 
+  mutate(weekday = wday(make_date(year, month, day), label=T)) %>% 
+  ggplot(aes(weekday)) +
+  geom_bar()
+```
+
+## 2a.
+```{r}
+#function and edited dataframe taken from class work
+make_datetime_100 <- function(year, month, day, time) {
+  make_datetime(year, month, day, time %/% 100, time %% 100)
+}
+
+flights_dt <- flights %>% 
+  filter(!is.na(dep_time), !is.na(arr_time)) %>%  # remove all cancelled fights
+  mutate(
+    dep_time = make_datetime_100(year, month, day, dep_time),
+    arr_time = make_datetime_100(year, month, day, arr_time),
+    sched_dep_time = make_datetime_100(year, month, day, sched_dep_time),
+    sched_arr_time = make_datetime_100(year, month, day, sched_arr_time)
+  ) %>% 
+  select(origin, dest, ends_with("delay"), ends_with("time"))
+
+flights_dt %>% 
+  mutate(minute = minute(dep_time)) %>% 
+  group_by(minute) %>% 
+  summarize(avg_dep_delay_m = mean(dep_delay)) %>% 
+  ggplot(aes(x=minute, y=avg_dep_delay_m)) +
+  geom_line()
+```
+
+The time with the lowest delays is by far at about 5 minutes before the hour. The delays are also relatively low at about 25 past.
+
+## 2b.
+```{r}
+flights_dt %>% 
+  mutate(minute = minute(sched_dep_time)) %>% 
+  group_by(minute) %>% 
+  summarize(avg_dep_delay_m = mean(dep_delay)) %>% 
+  ggplot(aes(x=minute, y=avg_dep_delay_m)) +
+  geom_line()
+```

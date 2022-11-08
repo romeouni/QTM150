@@ -1,0 +1,38 @@
+---
+title: "Babynames HW"
+author: "Rahul Ulman"
+date: "2022-10-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(babynames)
+library(dplyr)
+```
+
+## R Markdown
+
+```{r}
+males <- babynames %>% 
+  select(year, sex, name, n) %>% 
+  filter(sex %in% "M") %>% 
+  mutate(nMales = n) 
+
+females <- babynames %>% 
+  select(year, sex, name, n) %>% 
+  filter(sex %in% "F") %>% 
+  mutate(nFemales = n)
+
+combNames <- left_join(males, females, by=c("name", "year")) %>% 
+  mutate(nCombined = nMales + nFemales) %>% 
+  select(year, name, nCombined) %>% 
+  filter(!is.na(nCombined)) %>% 
+  group_by(year) %>% 
+  top_n(5) %>% 
+  arrange(desc(nCombined), .by_group = T)
+
+combNames
+
+```

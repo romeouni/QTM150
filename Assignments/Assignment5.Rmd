@@ -1,0 +1,129 @@
+---
+title: "Assignment 5"
+author: "Rahul Ulman, Leslie Flores, Dave Melkani"
+date: "2022-10-17"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+ATL2020 <- read.csv("ATL2020.csv")
+```
+
+### 1.
+```{r}
+length(unique(ATL2020$dest[ATL2020$carrier %in% "WN"]))
+
+ATL2020 %>% 
+  filter(carrier == "WN") %>% 
+  group_by(dest) %>% 
+  summarize(dist = mean(distance, na.rm = T)) %>% 
+  arrange(dist) %>% 
+  slice_min(dist, n = 10)
+```
+
+Southwest Airlines flies to 40 destinations out of ATL, with the shortest flight by distance being to Greenville-Spartanburg International Airport in South Carolina.
+
+
+### 2.
+```{r}
+ATL2020 %>% 
+  filter(carrier == "DL") %>% 
+  group_by(dest) %>% 
+  summarize(dist = mean(distance, na.rm = T),
+            airtime = mean(air_time, na.rm=TRUE)) %>% 
+  arrange(desc(dist)) %>% 
+  slice_max(dist, n = 10)
+```
+
+
+### 3.
+```{r}
+ATL_NYC_H1 <- ATL2020 %>% 
+  filter(dest == "LGA" | dest == "JFK" | dest == "EWR",
+         month < 7,
+         dep_time >= 600 & dep_time <= 1500,
+         arr_delay <= 0)
+```
+
+
+### 4.
+```{r}
+ATL_NYC_H1 %>% 
+  group_by(carrier) %>% 
+  summarize(avg_airtime = mean(air_time, na.rm = T)) %>% 
+  arrange(desc(avg_airtime)) %>% 
+  slice_min(avg_airtime, n = 1)
+```
+
+Flights from United Airlines had the shortest average flight time, a little over one and a half hours.
+
+
+### 5.
+```{r}
+ATL2020 %>% 
+  filter(dest == "LGA" | dest == "JFK" | dest == "EWR") %>% 
+  group_by(carrier) %>% 
+  summarize(avg_dep_delay = mean(dep_delay, na.rm = T),
+            avg_arr_delay = mean(arr_delay, na.rm = T),
+            ovr_delay = avg_dep_delay + avg_arr_delay) %>% 
+  arrange(desc(ovr_delay))
+```
+
+Spirit Airlines had the highest average overall delay.
+
+
+### 6.
+```{r}
+ATL2020 %>% 
+  filter(dest == "MCO") %>% 
+  mutate(delay_cat = case_when(
+          dep_delay <= 0 ~ "No Delay",
+          is.na(dep_delay) ~ "No Delay",
+          dep_delay > 0 & dep_delay <= 15 ~ "1-15 Min Delay",
+          dep_delay > 15 & dep_delay <= 60 ~ "16-60 Min Delay",
+          dep_delay > 60 ~ "More Than 1 Hr Delay"),
+          delay_cat = factor(delay_cat, levels = c("No Delay", "1-15 Min Delay", "16-60 Min Delay",              "More Than 1 Hr Delay"))) %>% 
+  ggplot(aes(carrier)) +
+  geom_bar() +
+  facet_wrap(~delay_cat)
+```
+
+### 7.
+```{r}
+length(unique(ATL2020$carrier[ATL2020$dest == "MCO"]))
+
+Orlando <- ATL2020 %>% 
+              filter(dest == "MCO",
+                     carrier != "DL") %>% 
+              mutate(long_delay = case_when(
+                dep_delay > 60 ~ TRUE,
+                arr_delay > 60 ~ TRUE,
+                TRUE ~ FALSE
+              ))
+table(Orlando$carrier, Orlando$long_delay)
+  
+```
+
+5 airlines fly to Orlando from Atlanta, of which Southwest had the most long delays going to Orlando.
+
+
+### 8.
+```{r}
+ATL2020 %>% 
+  filter(dest == "DFW",
+         carrier == "DL" | carrier == "AA",
+         dep_delay <= 300,
+         arr_delay <= 300) %>% 
+  ggplot(aes(dep_delay, arr_delay, color = carrier)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+
+### 9.
+We want to know how much the overall delay of a flight(the response variable) is impacted by the time of year. The explanatory variables would be the month and day of each individual flight. We think that the overall delays are longest during the winter, specifically the holiday season, as the combination of poor weather in various destinations and the increased traffic of the season contribute to the overall slowing down of airport operations.
