@@ -1,0 +1,55 @@
+---
+title: "Assignment 8"
+author: "Rahul Ulman"
+date: "2022-11-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## 1.
+```{r}
+#A
+grade <- rnorm(100, 80, 7)
+
+#B
+grades <- enframe(grade) %>% 
+  select(value) %>% 
+  rename(score = value) %>% 
+  mutate(Letter_Grade = case_when(
+    score >= 90 ~ "A",
+    score >= 80 ~ "B",
+    score >= 70 ~ "C",
+    TRUE ~ "D"
+  ))
+
+head(grades)
+```
+
+## 2.
+```{r}
+means <- numeric(ncol(mtcars))
+medians <- numeric(ncol(mtcars))
+for(i in 1:ncol(mtcars)){
+#A
+  means[i] <- mean(mtcars[,i])
+#B
+  medians[i] <- median(mtcars[,i])
+}
+
+#C
+mtcars1 <- list(means=means, medians=medians)
+
+mtcars1
+```
+
+## 3.
+```{r}
+mtcars2 <- sapply(mtcars1, max)
+
+mtcars2
+```
+
