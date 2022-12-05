@@ -41,7 +41,7 @@ ex2 <- ex[!duplicated(ex),]
 ex3 <- ex2 %>% 
   pivot_wider(names_from="dest",values_from="count")
 
-sel_airports = c("SEA", "LAS", "SAT", "MCO", "TPA")  
+sel_airports = c("SEA", "LAS", "SAT", "MCO", "MCI", "ATL", "BOS", "SLC", "DTW", "IAH","MSP", "JFK", "ORD", "DEN", "SFO")  
 
 final2019 <- ex3 %>% 
   select(carrier, sel_airports) %>% 
@@ -59,12 +59,12 @@ ex3 <- ex2 %>%
   pivot_wider(names_from="dest",values_from="count")
 
 final2020 <- ex3 %>% 
-  select(carrier, SEA, LAS, MCO)
+  select(carrier, SEA, LAS, MCO, ATL, BOS, SLC, DTW, IAH, MSP, JFK, ORD, DEN, SFO)
 
 final2020 <- final2020 %>% 
   mutate(SAT = 0,
-         TPA = 0,
-         year = 2020)
+         MCI = 0)
+
 ###############################################################################
 
 ex <- may2021mod %>% 
@@ -75,7 +75,8 @@ ex <- may2021mod %>%
 ex2 <- ex[!duplicated(ex),]  
 
 ex3 <- ex2 %>% 
-  pivot_wider(names_from="dest",values_from="count")
+  pivot_wider(names_from="dest",values_from="count") %>% 
+  mutate(MCI = 0)
 
 final2021 <- ex3 %>% 
   select(carrier, sel_airports) %>% 
@@ -96,16 +97,22 @@ final2021 <- final2021 %>%
 change2019_2020 <- left_join(final2019, final2020, by="carrier")
 
 change2019_2020 <- change2019_2020 %>% 
-  mutate(ChangeSEA = SEA.y - SEA.x,
-         ChangeLAS = LAS.y - LAS.x,
-         ChangeSAT = SAT.y - SAT.x,
-         ChangeMCO = MCO.y - MCO.x,
-         ChangeTPA = TPA.y - TPA.x) %>% 
-  select(carrier, ChangeSEA, ChangeLAS, ChangeMCO, ChangeTPA) %>% 
-  rename("SEA" = "ChangeSEA",
-         "LAS" = "ChangeLAS",
-         "MCO" = "ChangeMCO",
-         "TPA" = "ChangeTPA")
+  mutate(SEA = SEA.y - SEA.x,
+         LAS = LAS.y - LAS.x,
+         SAT = SAT.y - SAT.x,
+         MCO = MCO.y - MCO.x,
+         MCI = MCI.y - MCI.x,
+         ATL = ATL.y - ATL.x,
+         BOS = BOS.y - BOS.x,
+         SLC = SLC.y - SLC.x,
+         DTW = DTW.y - DTW.x,
+         IAH = IAH.y - IAH.x,
+         MSP = MSP.y - MSP.x,
+         JFK = JFK.y - JFK.x,
+         ORD = ORD.y - ORD.x,
+         DEN = DEN.y - DEN.x,
+         SFO = SFO.y - SFO.x) %>% 
+  select(carrier, SEA, LAS, SAT, MCO, MCI, ATL, BOS, SLC, DTW, IAH, MSP, JFK, ORD, DEN, SFO)
 
 
 newChange <- t(change2019_2020)
@@ -117,10 +124,10 @@ colnames(newChange) <- newChange[1,]
 newChange <- newChange[-1,]
 
 newChange <- newChange %>% 
-  mutate(faa = c("SEA", "LAS", "MCO", "TPA"))
+  mutate(faa = c("SEA", "LAS", "SAT", "MCO", "MCI", "ATL", "BOS", "SLC", "DTW", "IAH","MSP", "JFK", "ORD", "DEN", "SFO"))
 
 
-rownames(newChange) <- c(1, 2, 3, 4)
+rownames(newChange) <- c(1:15)
 
 airports <- airports %>% 
   filter(faa %in% sel_airports) %>% 
@@ -137,9 +144,3 @@ newChange <- newChange %>%
 
 us <- c(left = -125, bottom = 24, right = -67, top = 49)
 map <- get_stamenmap(us, zoom = 5, maptype = "toner-lite")
-
-AAplot <- ggmap(map) +
-  geom_point(data = newChange, aes(x=lon, y=lat, color = AA, ids = name)) +
-  scale_color_gradient(low = "red", high="green")
-
-ggplotly(AAplot)
